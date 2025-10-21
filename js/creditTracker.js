@@ -163,11 +163,20 @@ class CreditTracker {
     }
 
     updateDisplay() {
-        if (this.displayElement) {
-            const balance = this.balance.remaining_balance;
-            this.displayElement.textContent = `$${balance.toFixed(2)}`;
+    if (this.displayElement) {
+        const balance = this.balance.remaining_balance;
+        this.displayElement.textContent = `$${balance.toFixed(2)}`;
+        
+        const percentage = (balance / this.config.starting_balance) * 100;
+        if (percentage > 50) {
+            this.displayElement.style.color = '#ffffff';  
+        } else if (percentage > 20) {
+            this.displayElement.style.color = '#ffaa00';  
+        } else {
+            this.displayElement.style.color = '#ff4444';  
         }
     }
+}
 
     startTracking() {
         setInterval(() => {

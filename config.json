@@ -1,0 +1,15 @@
+{
+  "starting_balance": 80.00,
+  "gpu_costs_per_hour": {
+    "NVIDIA B200": 6.25,
+    "NVIDIA H200": 4.54,
+    "NVIDIA H100": 3.95,
+    "NVIDIA A100-SXM4-80GB": 2.50,
+    "NVIDIA A100-SXM4-40GB": 2.10,
+    "NVIDIA L40S": 1.95,
+    "NVIDIA A10G": 1.10,
+    "NVIDIA L4": 0.80,
+    "Tesla T4": 0.59
+  },
+  "gpu_count": 1
+}

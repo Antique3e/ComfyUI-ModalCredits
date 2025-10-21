@@ -1,217 +1,150 @@
-# 💰 ComfyUI-ModalCredits
+# 💰 ComfyUI Credit Tracker
 
-Track your Modal GPU credits in real-time with an iPhone-style battery indicator in the ComfyUI header!
+Simple UI extension to track Modal GPU credits in real-time.
 
-![Battery Icon](https://img.shields.io/badge/Battery-80%25-green) ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+## 📸 Preview
+
+Displays a simple `$80.00` button in the header bar that updates every second.
 
 ## ✨ Features
 
-- 🔋 **iPhone-style battery indicator** in ComfyUI header
-- ⚡ **Real-time credit tracking** - updates every second
-- 💾 **Persistent data** - survives server restarts
-- 🎮 **Auto GPU detection** - detects A10G, A100, H100, T4, L4, L40S
-- 🔄 **Token change detection** - auto-resets when switching Modal accounts
-- 🎨 **Color-coded alerts** - Green (>50%), Yellow (20-50%), Red (<20%)
-- 📊 **Detailed stats** - Click icon for GPU type, cost/hour, estimated time remaining
+- 💵 Simple dollar amount display in header
+- ⚡ Real-time tracking (updates per second)
+- 💾 Persistent across restarts
+- 🎮 Auto GPU detection
+- 📊 Click to view details
+- 🎨 Color-coded: Green (>50%), Yellow (20-50%), Red (<20%)
 
 ## 📦 Installation
 
-### Quick Install (Recommended)
+### Quick Install
 
 ```bash
 cd ComfyUI/custom_nodes/
 git clone https://github.com/yourusername/ComfyUI-ModalCredits.git
 ```
 
-Then restart ComfyUI server.
+Restart ComfyUI.
 
 ### Manual Install
 
-1. Create directory:
+1. **Create folder:**
 ```bash
 cd ComfyUI/custom_nodes/
 mkdir ComfyUI-ModalCredits
 cd ComfyUI-ModalCredits
-mkdir web
+mkdir js
 ```
 
-2. Copy these files:
-   - `__init__.py`
-   - `modal_credits_node.py`
-   - `routes.py`
-   - `web/modal_credits.js`
+2. **Copy files:**
+   - `__init__.py` (root)
+   - `config.json` (root)
+   - `js/creditTracker.js` (in js folder)
 
-3. Restart ComfyUI
+3. **Restart ComfyUI**
 
 ## ⚙️ Configuration
 
-### Step 1: Update GPU Costs
+Edit `config.json` to set your GPU costs:
 
-Edit `modal_credits_node.py` and update prices to match your Modal plan:
-
-```python
-GPU_COSTS = {
-    "A10G": 1.10,        # ← Update these
-    "A100-40GB": 3.00,
-    "A100-80GB": 4.00,
-    "H100": 8.00,
-    "T4": 0.60,
-    "L4": 0.80,
-    "L40S": 2.50,
-    "UNKNOWN": 1.00
+```json
+{
+  "starting_balance": 80.00,
+  "gpu_costs_per_hour": {
+    "NVIDIA H100": 3.95,
+    "NVIDIA A100-SXM4-80GB": 2.50,
+    "NVIDIA A100-SXM4-40GB": 2.10,
+    "NVIDIA A10G": 1.10,
+    "Tesla T4": 0.59
+  },
+  "gpu_count": 1
 }
 ```
 
-### Step 2: Set Initial Credits
-
-Default is $80. Change it by:
-1. Adding the "Modal Credits Monitor" node to your workflow
-2. Setting `initial_credits` parameter
-3. Or editing the default in the code
-
 ## 🚀 Usage
 
-### After Installation
-
-1. **Start ComfyUI** - Battery icon appears automatically in header
-2. **View credits** - See remaining balance next to battery
-3. **Click icon** - See detailed breakdown
-4. **Monitor usage** - Watch it decrease in real-time
-
-### Node Parameters
-
-- `initial_credits` (default: 80.0) - Your starting credit amount
-- `reset_credits` (default: False) - Toggle to reset counter
-- `gpu_override` (default: AUTO) - Manual GPU selection if auto-detect fails
-
-### Battery Colors
-
-- 🟢 **Green** - More than 50% remaining (healthy)
-- 🟡 **Yellow** - 20-50% remaining (caution)
-- 🔴 **Red** - Less than 20% remaining (low, pulses)
-
-## 📊 What You'll See
-
-Click the battery icon to view:
-```
-💰 Modal Credits Details
-━━━━━━━━━━━━━━━━━━━━━━━━
-💵 Remaining: $45.50
-📊 Used: $34.50
-💳 Initial: $80.00
-🔋 Battery: 57%
-
-🎮 GPU: A100-40GB
-💲 Cost: $3.00/hour
-⏱️  Session: 11.50 hours
-
-🧮 Estimated time remaining:
-   15.17 hours
-```
+1. **Start ComfyUI** - The credit display appears in the header automatically
+2. **View balance** - See remaining credits (e.g., `$79.50`)
+3. **Click for details** - Shows GPU type, cost/hour, time remaining
+4. **Color changes** - Green → Yellow → Red as credits decrease
 
 ## 💾 Data Storage
 
-Credits are saved to:
+Balance is saved to `balance.json` in the extension folder:
+
+```json
+{
+  "last_updated": "2025-10-21T12:00:00Z",
+  "remaining_balance": 75.40
+}
 ```
-ComfyUI/output/modal_credits_data.json
-```
 
-This file stores:
-- Initial credit amount
-- Total credits used
-- Session start time
-- Modal token ID (for account detection)
-- Last save timestamp
+## 🔄 Reset Balance
 
-## 🔄 Resetting Credits
-
-### Method 1: Using the Node
-Add node to workflow → Set `reset_credits` to True → Run
-
-### Method 2: Delete Data File
+### API Method:
 ```bash
-rm ComfyUI/output/modal_credits_data.json
+curl -X POST http://localhost:8188/credit_tracker/reset
 ```
 
-### Method 3: API Call
-```bash
-curl -X POST http://localhost:8188/modal_credits/reset \
-  -H "Content-Type: application/json" \
-  -d '{"initial_credits": 80.0}'
-```
-
-## 🔧 Troubleshooting
-
-### Battery icon not showing up?
-1. ✅ Check all files are in correct locations
-2. ✅ Clear browser cache (Ctrl+Shift+R)
-3. ✅ Check browser console for errors (F12)
-4. ✅ Restart ComfyUI server completely
-
-### GPU not detected?
-1. ✅ Verify nvidia-smi works: `nvidia-smi`
-2. ✅ Use `gpu_override` in node settings
-3. ✅ Check server console for detection messages
-
-### Credits not saving?
-1. ✅ Check permissions on `ComfyUI/output/` directory
-2. ✅ Look for `modal_credits_data.json` file
-3. ✅ Check server logs for write errors
-
-### Wrong GPU detected?
-- Use the `gpu_override` dropdown in the node to manually select
+### Manual Method:
+Delete `balance.json` and restart ComfyUI.
 
 ## 📁 File Structure
 
 ```
-ComfyUI/custom_nodes/ComfyUI-ModalCredits/
-├── __init__.py                  # Package initialization
-├── modal_credits_node.py        # Main node & credit logic
-├── routes.py                    # API endpoints
-├── web/
-│   └── modal_credits.js         # Web interface & battery UI
-└── README.md                    # This file
+ComfyUI-ModalCredits/
+├── __init__.py              # Backend API
+├── config.json              # GPU costs configuration
+├── balance.json             # Auto-generated balance file
+├── js/
+│   └── creditTracker.js     # Frontend UI
+└── README.md
 ```
 
-## 🎯 How It Works
+## 🔧 API Endpoints
 
-1. **GPU Detection**: Uses `nvidia-smi` to detect your GPU
-2. **Cost Calculation**: Calculates cost per second based on GPU
-3. **Real-time Updates**: Updates every second in the background
-4. **Data Persistence**: Saves to JSON file every 10 seconds
-5. **Token Detection**: Reads Modal config to detect account changes
+- `GET /credit_tracker/config` - Get configuration
+- `GET /credit_tracker/balance` - Get current balance
+- `POST /credit_tracker/balance` - Update balance
+- `GET /credit_tracker/gpu_info` - Get GPU information
+- `POST /credit_tracker/reset` - Reset to starting balance
 
-## 💡 Pro Tips
+## 🛠️ Troubleshooting
 
-- 📌 Update GPU costs monthly to match Modal's pricing
-- 👀 Click battery icon regularly to check estimated time remaining
-- ⚠️ Set alerts when credits drop below 20%
-- 💾 Backup `modal_credits_data.json` to preserve history
-- 🔄 Reset credits when you add funds to your Modal account
+### Display not showing?
+- Clear browser cache (Ctrl+Shift+R)
+- Check browser console (F12) for errors
+- Verify files are in correct locations
+- Restart ComfyUI completely
 
-## 📝 Requirements
+### Wrong GPU detected?
+- Check `nvidia-smi` command works
+- Manually edit GPU name in `config.json`
+- Add your GPU model to the cost list
 
-- ComfyUI
-- Python 3.8+
-- NVIDIA GPU (for GPU detection)
-- Modal CLI configured (optional, for token detection)
+### Balance not saving?
+- Check write permissions on folder
+- Look for `balance.json` file
+- Check server console for errors
 
-## 🤝 Contributing
+## 💡 Tips
 
-Issues and PRs welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Improve documentation
-- Add support for more GPUs
+- Update `config.json` costs to match your Modal pricing
+- Click the display to see detailed breakdown
+- Balance auto-saves every 10 seconds
+- Color changes warn when credits are low
 
 ## 📄 License
 
 MIT License - Free to use and modify
 
-## ⭐ Support
+## 🤝 Contributing
 
-If this helps you track your Modal credits, give it a star! ⭐
+Issues and PRs welcome!
 
 ---
 
-**Made with ❤️ for the ComfyUI community**
+**Made for the ComfyUI community** ❤️

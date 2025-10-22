@@ -59,7 +59,7 @@ class CreditTracker {
                     },
                     gpu_count: 1
                 };
-                console.log('⚠ Credit Tracker: Using default config');
+                console.log('⚠️ Credit Tracker: Using default config');
             }
         } catch (error) {
             console.error('❌ Credit Tracker: Config load failed', error);
@@ -106,7 +106,7 @@ class CreditTracker {
                 }
                 
                 this.costPerSecond = (costPerHour / 3600) * this.gpuCount;
-                console.log(✅ Credit Tracker: GPU detected - ${this.gpuType} @ $${costPerHour}/hr);
+                console.log(`✅ Credit Tracker: GPU detected - ${this.gpuType} @ $${costPerHour}/hr`);
             }
         } catch (error) {
             console.error('❌ Credit Tracker: GPU detection failed', error);
@@ -152,7 +152,7 @@ class CreditTracker {
             width: 100%;
             background-color: ${COLORS.START};
             transition: width 1.0s ease, background-color 1.0s ease;
-            border-radius: 4px;
+            border-radius: 4px 0 0 4px;
         `;
         container.appendChild(slider);
         
@@ -205,7 +205,7 @@ class CreditTracker {
                     console.log('✅ Credit Tracker: Display added to header (Manager not found)');
                 }
             } else {
-                console.warn('⚠ Credit Tracker: Menu bar not found, retrying...');
+                console.warn('⚠️ Credit Tracker: Menu bar not found, retrying...');
                 setTimeout(addToHeader, 500);
             }
         };
@@ -229,7 +229,7 @@ class CreditTracker {
     updateDisplay() {
         if (this.displayElement) {
             const balance = this.balance.remaining_balance;
-            this.displayElement.textContent = $${balance.toFixed(2)};
+            this.displayElement.textContent = `$${balance.toFixed(2)}`;
         }
     }
     */
@@ -241,10 +241,10 @@ class CreditTracker {
             const percentage = (balance / this.config.starting_balance) * 100;
             
             // Update text display
-            this.displayElement.textContent = $${balance.toFixed(2)};
+            this.displayElement.textContent = `$${balance.toFixed(2)}`;
             
             // Update bar width (shrinks from 100% to 0% as credits decrease)
-            this.sliderElement.style.width = ${percentage}%;
+            this.sliderElement.style.width = `${percentage}%`;
             
             // ========================================
             // COLOR TRANSITION LOGIC (CRYSTOOLS STYLE - ONLY 2 COLORS)
@@ -253,9 +253,9 @@ class CreditTracker {
             // Uses CSS color-mix() to blend two colors based on percentage
             // 
             // How it works:
-            // - 100% credits: color-mix(red 0%, green) = pure green #00ff00
+            // - 100% credits: color-mix(red 0%, green) = pure green #47ae00
             // - 75% credits: color-mix(red 25%, green) = lime green
-            // - 50% credits: color-mix(red 50%, green) = yellow (natural mix)
+            // - 50% credits: color-mix(red 50%, green) = yellow-green (natural mix)
             // - 25% credits: color-mix(red 75%, green) = orange-red
             // - 0% credits: color-mix(red 100%, green) = pure red #ff0000
             //
@@ -266,7 +266,7 @@ class CreditTracker {
             
             const redAmount = 100 - percentage; // Inverted: more red as credits decrease
             this.sliderElement.style.backgroundColor = 
-                color-mix(in srgb, ${COLORS.END} ${redAmount}%, ${COLORS.START});
+                `color-mix(in srgb, ${COLORS.END} ${redAmount}%, ${COLORS.START})`;
         }
     }
     // ████████████████ NEW CODE ENDS HERE ████████████████
@@ -329,7 +329,7 @@ class CreditTracker {
 🎮 GPU: ${this.gpuType}
 🔢 Count: ${this.gpuCount}
 💲 Cost: $${costPerHour.toFixed(2)}/hour
-⏱  Remaining: ${hoursRemaining} hours
+⏱️  Remaining: ${hoursRemaining} hours
         `.trim();
         
         alert(message);

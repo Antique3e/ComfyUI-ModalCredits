@@ -12,8 +12,8 @@ import { api } from "../../scripts/api.js";
 // Change these values to customize the bar colors
 const COLORS = {
     BACKGROUND: '#222222',     // Dark gray background (when no credits)
-    START: '#47ae00',          // Green - Full credits (100%)
-    END: '#ff0000',            // Red - No credits (0%)
+    START: '#236692',          // Green - Full credits (100%)
+    END: '#EB3B5A',            // Red - No credits (0%)
     TEXT: '#ffffff'            // White text on top of bar
 };
 // ========================================

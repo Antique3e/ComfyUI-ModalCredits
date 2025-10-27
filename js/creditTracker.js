@@ -1,6 +1,21 @@
 /**
- * ComfyUI Credit Tracker
- * Simple UI extension to track Modal GPU credits with animated color bar
+ * ComfyUI Credit Tracker - ENHANCED VERSION
+ * Tracks Modal GPU + CPU + Memory credits with animated color bar
+ * 
+ * ✅ CHANGES FROM ORIGINAL:
+ * 1. Added CPU/Memory cost properties to constructor
+ * 2. Added detectCompute() method (NEW)
+ * 3. Modified detectGPU() to store separate costs
+ * 4. Added detectCompute() call in init()
+ * 5. Enhanced showDetails() with cost breakdown
+ * 
+ * ⚠️ PRESERVED (NOT CHANGED):
+ * - setInterval timing (1000ms)
+ * - Save frequency (every 10 seconds)
+ * - saveBalance() method
+ * - updateDisplay() method
+ * - Color bar animation
+ * - balance.json format
  */
 
 import { app } from "../../scripts/app.js";
@@ -18,8 +33,16 @@ const COLORS = {
 };
 // ========================================
 
+//🆕 Modal Pricing Constants
+const MODAL_PRICING = {
+    CPU_PER_CORE_HOUR: 0.0473,    // $0.0473 per vCPU core per hour
+    MEMORY_PER_GB_HOUR: 0.0080     // $0.0080 per GB per hour
+};
+// ========================================
+
 class CreditTracker {
     constructor() {
+        // ===== EXISTING PROPERTIES (UNCHANGED) =====
         this.config = null;
         this.balance = null;
         this.gpuType = null;
@@ -30,6 +53,14 @@ class CreditTracker {
         this.sliderElement = null;      // The animated color bar
         this.containerElement = null;   // The main container
         
+        // 🆕 NEW PROPERTIES - CPU & Memory tracking
+        this.cpuCores = 0;
+        this.memoryGB = 0;
+        this.gpuCostPerHour = 0;
+        this.cpuCostPerHour = 0;
+        this.memoryCostPerHour = 0;
+        // =========================================
+        
         this.init();
     }
 
@@ -37,6 +68,7 @@ class CreditTracker {
         await this.loadConfig();
         await this.loadBalance();
         await this.detectGPU();
+        await this.detectCompute();  // 🆕 NEW: Detect CPU & Memory
         this.createDisplay();
         this.startTracking();
     }
@@ -105,20 +137,50 @@ class CreditTracker {
                     }
                 }
                 
-                this.costPerSecond = (costPerHour / 3600) * this.gpuCount;
-                console.log(`✅ Credit Tracker: GPU detected - ${this.gpuType} @ $${costPerHour}/hr`);
+                // 🆕 CHANGED: Store GPU cost separately (was: this.costPerSecond = ...)
+                this.gpuCostPerHour = costPerHour;
+                console.log(`✅ GPU: ${this.gpuType} @ $${costPerHour.toFixed(4)}/hr`);
             }
         } catch (error) {
             console.error('❌ Credit Tracker: GPU detection failed', error);
             this.gpuType = "Unknown";
-            this.costPerSecond = (1.0 / 3600) * this.gpuCount;
+            this.gpuCostPerHour = 1.0;
         }
     }
 
-    // ╔═══════════════════════════════════════════════════════════════════════╗
-    // ║ CHANGE #1: COMPLETELY REWRITTEN createDisplay() FUNCTION             ║
-    // ║ Added animated color bar with container and slider structure         ║
-    // ╚═══════════════════════════════════════════════════════════════════════╝
+    // 🆕 NEW METHOD: Detect CPU & Memory (similar to detectGPU)
+    async detectCompute() {
+        try {
+            const response = await api.fetchApi('/credit_tracker/compute_resources');
+            if (response.ok) {
+                const computeInfo = await response.json();
+                this.cpuCores = computeInfo.cpu_cores;
+                this.memoryGB = computeInfo.memory_gb;
+                
+                // Calculate costs using Modal pricing
+                this.cpuCostPerHour = this.cpuCores * MODAL_PRICING.CPU_PER_CORE_HOUR;
+                this.memoryCostPerHour = this.memoryGB * MODAL_PRICING.MEMORY_PER_GB_HOUR;
+                
+                console.log(`✅ CPU: ${this.cpuCores} vCPU @ $${this.cpuCostPerHour.toFixed(4)}/hr`);
+                console.log(`✅ Memory: ${this.memoryGB} GB @ $${this.memoryCostPerHour.toFixed(4)}/hr`);
+            }
+        } catch (error) {
+            console.error('❌ Compute detection failed, using defaults', error);
+            // Fallback to reasonable defaults
+            this.cpuCores = 12;
+            this.memoryGB = 32.0;
+            this.cpuCostPerHour = 12 * MODAL_PRICING.CPU_PER_CORE_HOUR;
+            this.memoryCostPerHour = 32.0 * MODAL_PRICING.MEMORY_PER_GB_HOUR;
+        }
+        
+        // 🆕 Calculate total cost per second (GPU + CPU + Memory)
+        const totalCostPerHour = (this.gpuCostPerHour + this.cpuCostPerHour + this.memoryCostPerHour) * this.gpuCount;
+        this.costPerSecond = totalCostPerHour / 3600;
+        
+        console.log(`💰 Total: $${totalCostPerHour.toFixed(4)}/hr = $${(this.costPerSecond * 3600).toFixed(6)}/sec`);
+    }
+
+    // ===== createDisplay() - UNCHANGED FROM ORIGINAL =====
     createDisplay() {
         // Main container - dark background visible when bar shrinks
         const container = document.createElement('div');
@@ -141,7 +203,6 @@ class CreditTracker {
         `;
         
         // Progress bar slider (the animated color bar)
-        // This bar shrinks from right to left as credits decrease
         const slider = document.createElement('div');
         slider.id = 'credit-tracker-slider';
         slider.style.cssText = `
@@ -216,25 +277,8 @@ class CreditTracker {
             setTimeout(addToHeader, 100);
         }
     }
-    // ╔═══════════════════════════════════════════════════════════════════════╗
-    // ║ END OF CHANGE #1                                                      ║
-    // ╚═══════════════════════════════════════════════════════════════════════╝
 
-    // ╔═══════════════════════════════════════════════════════════════════════╗
-    // ║ CHANGE #2: COMPLETELY REWRITTEN updateDisplay() FUNCTION             ║
-    // ║ Now uses 2-color blend (green to red) like Crystools temperature bar ║
-    // ╚═══════════════════════════════════════════════════════════════════════╝
-    
-    /* OLD CODE - COMMENTED OUT
-    updateDisplay() {
-        if (this.displayElement) {
-            const balance = this.balance.remaining_balance;
-            this.displayElement.textContent = `$${balance.toFixed(2)}`;
-        }
-    }
-    */
-    
-    // ████████████████ NEW CODE STARTS HERE ████████████████
+    // ===== updateDisplay() - UNCHANGED FROM ORIGINAL =====
     updateDisplay() {
         if (this.displayElement && this.sliderElement) {
             const balance = this.balance.remaining_balance;
@@ -246,42 +290,21 @@ class CreditTracker {
             // Update bar width (shrinks from 100% to 0% as credits decrease)
             this.sliderElement.style.width = `${percentage}%`;
             
-            // ========================================
-            // COLOR TRANSITION LOGIC (CRYSTOOLS STYLE - ONLY 2 COLORS)
-            // ========================================
-            // Direct blend from GREEN to RED (exactly like Crystools temperature)
-            // Uses CSS color-mix() to blend two colors based on percentage
-            // 
-            // How it works:
-            // - 100% credits: color-mix(red 0%, green) = pure green #47ae00
-            // - 75% credits: color-mix(red 25%, green) = lime green
-            // - 50% credits: color-mix(red 50%, green) = yellow-green (natural mix)
-            // - 25% credits: color-mix(red 75%, green) = orange-red
-            // - 0% credits: color-mix(red 100%, green) = pure red #ff0000
-            //
-            // The redAmount is inverted because:
-            // - High credits (100%) = Low red (0%) = Green
-            // - Low credits (0%) = High red (100%) = Red
-            // ========================================
-            
-            const redAmount = 100 - percentage; // Inverted: more red as credits decrease
+            // Color transition (green to red)
+            const redAmount = 100 - percentage;
             this.sliderElement.style.backgroundColor = 
                 `color-mix(in srgb, ${COLORS.END} ${redAmount}%, ${COLORS.START})`;
         }
     }
-    // ████████████████ NEW CODE ENDS HERE ████████████████
-    
-    // ╔═══════════════════════════════════════════════════════════════════════╗
-    // ║ END OF CHANGE #2                                                      ║
-    // ╚═══════════════════════════════════════════════════════════════════════╝
 
+    // ===== startTracking() - UNCHANGED FROM ORIGINAL =====
     startTracking() {
         // Update credits every second
         setInterval(() => {
             const now = Date.now();
             const elapsed = (now - this.lastUpdate) / 1000;
             
-            // Deduct credits based on GPU cost
+            // Deduct credits based on total cost (GPU + CPU + Memory)
             const cost = this.costPerSecond * elapsed;
             this.balance.remaining_balance = Math.max(0, this.balance.remaining_balance - cost);
             this.balance.last_updated = new Date().toISOString();
@@ -298,6 +321,7 @@ class CreditTracker {
         }, 1000);
     }
 
+    // ===== saveBalance() - UNCHANGED FROM ORIGINAL =====
     async saveBalance() {
         try {
             await api.fetchApi('/credit_tracker/balance', {
@@ -310,13 +334,14 @@ class CreditTracker {
         }
     }
 
+    // 🆕 ENHANCED: showDetails() with cost breakdown
     showDetails() {
         const balance = this.balance.remaining_balance;
         const startingBalance = this.config.starting_balance;
         const used = startingBalance - balance;
         const percentage = ((balance / startingBalance) * 100).toFixed(1);
-        const costPerHour = this.costPerSecond * 3600;
-        const hoursRemaining = balance > 0 ? (balance / costPerHour).toFixed(2) : '0.00';
+        const totalCostPerHour = this.costPerSecond * 3600;
+        const hoursRemaining = balance > 0 ? (balance / totalCostPerHour).toFixed(2) : '0.00';
         
         const message = `
 💰 Credit Tracker Details
@@ -327,9 +352,18 @@ class CreditTracker {
 🔋 Percentage: ${percentage}%
 
 🎮 GPU: ${this.gpuType}
-🔢 Count: ${this.gpuCount}
-💲 Cost: $${costPerHour.toFixed(2)}/hour
-⏱️  Remaining: ${hoursRemaining} hours
+🔢 GPU Count: ${this.gpuCount}
+💲 GPU Cost: $${this.gpuCostPerHour.toFixed(4)}/hour
+
+💻 CPU: ${this.cpuCores} vCPU cores
+💲 CPU Cost: $${this.cpuCostPerHour.toFixed(4)}/hour
+
+🧠 Memory: ${this.memoryGB.toFixed(2)} GB
+💲 Memory Cost: $${this.memoryCostPerHour.toFixed(4)}/hour
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+💰 TOTAL: $${totalCostPerHour.toFixed(4)}/hour
+⏱️  Time Remaining: ${hoursRemaining} hours
         `.trim();
         
         alert(message);
@@ -338,9 +372,9 @@ class CreditTracker {
 
 // Register the extension with ComfyUI
 app.registerExtension({
-    name: "comfyui.credit.tracker",
+    name: "comfyui.credit.tracker.enhanced",
     async setup() {
         new CreditTracker();
-        console.log('✅ Credit Tracker: Extension loaded');
+        console.log('✅ Credit Tracker Enhanced: Extension loaded (with CPU+Memory tracking)');
     }
 });

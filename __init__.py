@@ -1,11 +1,12 @@
 """
-ComfyUI Credit Tracker - ENHANCED VERSION
-Adds CPU + Memory cost tracking while keeping ALL existing logic intact
+ComfyUI Credit Tracker
+Simple extension to track Modal GPU credits
 """
 
 import os
 import json
 import subprocess
+import psutil  # NEW: Added for CPU/Memory detection
 from aiohttp import web
 import server
 
@@ -41,68 +42,37 @@ def save_balance(balance_data):
 
 
 def get_gpu_info():
-    """Detect GPU using nvidia-smi"""
+    """Detect GPU using nvidia-smi + CPU/Memory using psutil"""
+    result = {"gpu_name": "Unknown", "success": False}
+    
+    # Detect GPU (existing code)
     try:
-        result = subprocess.run(
+        gpu_result = subprocess.run(
             ['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'],
             capture_output=True,
             text=True,
             timeout=5
         )
-        if result.returncode == 0:
-            gpu_name = result.stdout.strip()
-            return {"gpu_name": gpu_name, "success": True}
+        if gpu_result.returncode == 0:
+            result["gpu_name"] = gpu_result.stdout.strip()
+            result["success"] = True
     except Exception as e:
         print(f"GPU detection failed: {e}")
     
-    return {"gpu_name": "Unknown", "success": False}
-
-
-# ============================================
-# 🆕 NEW FUNCTION: CPU & Memory Detection
-# ============================================
-def get_compute_resources():
-    """
-    Detect CPU cores and Memory using psutil
-    Similar to get_gpu_info() but for CPU/Memory
-    """
+    # NEW: Detect CPU and Memory (added to same function)
     try:
-        import psutil
-        
-        # Detect CPU cores (logical = vCPU count, includes hyper-threading)
-        cpu_cores = psutil.cpu_count(logical=True)
-        
-        # Detect Memory in GB
-        memory_bytes = psutil.virtual_memory().total
-        memory_gb = round(memory_bytes / (1024**3), 2)
-        
-        print(f"✅ Compute Resources Detected: {cpu_cores} vCPU, {memory_gb} GB RAM")
-        
-        return {
-            "cpu_cores": cpu_cores,
-            "memory_gb": memory_gb,
-            "success": True
-        }
-    except ImportError:
-        print("⚠️  psutil not installed, using defaults (12 vCPU, 32 GB)")
-        # Fallback to safe defaults if psutil not available
-        return {
-            "cpu_cores": 12,
-            "memory_gb": 32.0,
-            "success": False,
-            "error": "psutil not installed"
-        }
+        result["cpu_cores"] = psutil.cpu_count(logical=True)
+        memory = psutil.virtual_memory()
+        result["memory_total_gb"] = round(memory.total / (1024**3), 2)
     except Exception as e:
-        print(f"⚠️  Compute detection failed: {e}, using defaults")
-        return {
-            "cpu_cores": 12,
-            "memory_gb": 32.0,
-            "success": False,
-            "error": str(e)
-        }
+        print(f"CPU/Memory detection failed: {e}")
+        result["cpu_cores"] = 0
+        result["memory_total_gb"] = 0
+    
+    return result
 
 
-# API Routes (EXISTING - NOT MODIFIED)
+# API Routes
 @server.PromptServer.instance.routes.get("/credit_tracker/config")
 async def get_config(request):
     """Get configuration"""
@@ -139,16 +109,6 @@ async def get_gpu(request):
     return web.json_response(gpu_info)
 
 
-# ============================================
-# 🆕 NEW ENDPOINT: Compute Resources
-# ============================================
-@server.PromptServer.instance.routes.get("/credit_tracker/compute_resources")
-async def get_compute(request):
-    """Get CPU and Memory information"""
-    compute_info = get_compute_resources()
-    return web.json_response(compute_info)
-
-
 @server.PromptServer.instance.routes.post("/credit_tracker/reset")
 async def reset_balance(request):
     """Reset balance to starting amount"""
@@ -168,6 +128,6 @@ async def reset_balance(request):
         return web.json_response({"error": str(e)}, status=500)
 
 
-print("✅ Credit Tracker: Extension loaded (Enhanced with CPU+Memory tracking)")
+print("✅ Credit Tracker: Extension loaded")
 
 __all__ = ['WEB_DIRECTORY']

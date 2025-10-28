@@ -61,11 +61,14 @@ def get_gpu_info():
     
     # NEW: Detect CPU and Memory (added to same function)
     try:
-        result["cpu_cores"] = psutil.cpu_count(logical=True)
-        memory = psutil.virtual_memory()
-        result["memory_total_gb"] = round(memory.total / (1024**3), 2)
+        cpu_result = subprocess.run(['nproc'], capture_output=True, text=True, timeout=5)
+        if cpu_result.returncode == 0:
+            result["cpu_cores"] = int(cpu_result.stdout.strip())
+        else:
+            result["cpu_cores"] = 0
+        result["memory_total_gb"] = 0   # Will use config value instead
     except Exception as e:
-        print(f"CPU/Memory detection failed: {e}")
+        print(f"CPU detection failed: {e}")
         result["cpu_cores"] = 0
         result["memory_total_gb"] = 0
     

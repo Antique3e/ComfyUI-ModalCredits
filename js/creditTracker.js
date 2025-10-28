@@ -285,7 +285,7 @@ class CreditTracker {
         
         // CHANGED: Updated to show GPU, CPU, Memory breakdown
         const message = `
-💲 Credit Tracker Details
+💠 Credit Tracker Details
 ━━━━━━━━━━━━━━━━━━━━━━━━
 💠 Remaining: $${balance.toFixed(2)}
 📌 GPU: ${this.gpuType}

@@ -289,11 +289,11 @@ class CreditTracker {
 ━━━━━━━━━━━━━━━━━━━━━━━━
 💠 Remaining: $${balance.toFixed(2)}
 📌 GPU: ${this.gpuType}
-📌  CPU: ${this.cpuCores} cores
+📌 CPU: ${this.cpuCores} cores
 📌 Memory: ${this.memoryGB.toFixed(2)} GB
 ━━━━━━━━━━━━━━━━━━━━━━━━
 💠 Total Cost: $${totalCostPerHour.toFixed(4)}/hour
-⌛  Time Remaining: ${hoursRemaining} hours
+⏳ Time Remaining: ${hoursRemaining} hours
         `.trim();
         
         alert(message);

@@ -11,5 +11,7 @@
     "NVIDIA L4": 0.80,
     "Tesla T4": 0.59
   },
-  "gpu_count": 1
+  "gpu_count": 1,
+  "cpu_cost_per_core_per_hour": 0.0473,
+  "memory_cost_per_gb_per_hour": 0.0080
 }

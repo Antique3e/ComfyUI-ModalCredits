@@ -118,7 +118,7 @@ class CreditTracker {
                 
                 // NEW: CPU and Memory detection (same approach as GPU)
                 this.cpuCores = info.cpu_cores || 0;
-                this.memoryGB = info.memory_total_gb || 0;
+                this.memoryGB = this.config.memory_gb_allocated || 16;
                 
                 this.cpuCostPerHour = this.config.cpu_cost_per_core_per_hour * this.cpuCores;
                 this.memoryCostPerHour = this.config.memory_cost_per_gb_per_hour * this.memoryGB;

@@ -12,7 +12,7 @@ import { api } from "../../scripts/api.js";
 const COLORS = {
     BACKGROUND: '#222222',
     START: '#236692',
-    END: '#EB3B5A',
+    END: '#DC2626',
     TEXT: '#ffffff'
 };
 // ========================================

@@ -285,14 +285,14 @@ class CreditTracker {
         
         // CHANGED: Updated to show GPU, CPU, Memory breakdown
         const message = `
-💠 Credit Tracker Details
+🎯 Credit Tracker Details
 ━━━━━━━━━━━━━━━━━━━━━━━━
-💠 Remaining: $${balance.toFixed(2)}
+✨ Remaining: $${balance.toFixed(2)}
 📌 GPU: ${this.gpuType}
 📌 CPU: ${this.cpuCores} cores
 📌 Memory: ${this.memoryGB.toFixed(2)} GB
 ━━━━━━━━━━━━━━━━━━━━━━━━
-💠 Total Cost: $${totalCostPerHour.toFixed(4)}/hour
+✨ Total Cost: $${totalCostPerHour.toFixed(4)}/hour
 ⏳ Time Remaining: ${hoursRemaining} hours
         `.trim();
         
